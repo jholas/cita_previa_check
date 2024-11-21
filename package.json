@@ -1,0 +1,27 @@
+{
+  "name": "auto_cita_previa",
+  "version": "1.0.0",
+  "description": "automate the process of registering cita previa",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "run.bat"
+  },
+  "author": "hollees.org",
+  "license": "MIT",
+  "dependencies": {
+    "arg": "^5.0.2",
+    "axios": "^1.7.2",
+    "log4js": "^6.9.1",
+    "moment": "^2.30.1",
+    "puppeteer": "^22.9.0",
+    "user-agents": "^1.1.275"
+  },
+  "devDependencies": {
+    "@types/log4js": "^2.3.5",
+    "@types/node": "18.15",
+    "@types/puppeteer": "^7.0.4",
+    "@types/user-agents": "^1.0.4",
+    "ts-node": "^10.9.2"
+  }
+}

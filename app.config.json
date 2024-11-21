@@ -1,0 +1,16 @@
+{
+    "mailer": {
+        "url": "url-to-your-hosting-server/mailer.php",
+        "token": "token",
+        "to": [
+            "your-email@gmail.com"
+        ],
+        "from": "Cita Previa <mail-of-originator@gmail.com>"
+    },
+    "mobileNotifier": {
+        "apiKey": "API-KEY",
+        "title": "Cita previa",
+        "channel": "citaPrevia",
+        "image": "https://expedientedeextranjeria.com/wp-content/uploads/2023/02/cropped-Expediente-de-extranjeria-Favicon-32x32.jpg"
+    }
+}

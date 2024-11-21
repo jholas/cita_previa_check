@@ -1,0 +1,19 @@
+{
+    "appenders": {
+        "applog": {
+            "type": "fileSync",
+            "filename": "logs/application.log",
+            "maxLogSize": "500K"
+        },
+        "console": { "type": "console" }
+    },
+    "categories": {
+        "default": {
+            "appenders": [
+                "applog",
+                "console"
+            ], 
+            "level": "debug"
+        }
+    }
+}
