@@ -1,11 +1,12 @@
 {
-  "name": "auto_cita_previa",
+  "name": "cita_previa_check",
   "version": "1.0.0",
   "description": "automate the process of registering cita previa",
   "main": "index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "run.bat"
+    "start": "run.bat",
+    "build": "tsc"
   },
   "author": "hollees.org",
   "license": "MIT",
