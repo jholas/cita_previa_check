@@ -7,6 +7,7 @@ import {
     cleanupFce,
     createScreenshot,
     delay,
+    getFormatedDateTime,
     getProvinciaUrl,
     getRandomUserAgent,
     printHelp
@@ -332,11 +333,13 @@ function logAppExit(exitCode: number) {
 //HTML mail content
 `<html><body>Cita previa available:
 <br>
+<b>Date:</b> ${getFormatedDateTime()}
+<br>
 <b>${frmData.CITA_OP} - ${frmData.CITA_OP_DESC}</b>
 <br>
 ${citaPlaces}
 <br>
-<span><b>Link:&nbsp;<b><a href="${getCitaPageUrl(frmData.provincia)}">${getCitaPageUrl(frmData.provincia)}</a></span>
+<span><b>Link:&nbsp;</b><a href="${getCitaPageUrl(frmData.provincia)}">${getCitaPageUrl(frmData.provincia)}</a></span>
 <br><br>
 <img src="data:image/png;base64,${base64_encode(screenshotPath)}" />
 </body></html>`
