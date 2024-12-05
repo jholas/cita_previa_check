@@ -50,15 +50,14 @@ writeHtmlLine('subject', $data['subject']);
 writeHtmlLine('text', $data['text']);
 writeHtmlLine('html', $data['html']);
 
+
+
+//Use of mailing service on the server
+//1) original using php mail() function
+
+
 /*
-ob_start();
-?>
-//follows text to compose email
-<?php
-$mail = ob_get_clean();
-*/
-
-
+// original php mail() call
 mail(
     $data['to'],
     $data['subject'],
@@ -66,5 +65,17 @@ mail(
     'From: '.$data['from']."\r\n".
     'Content-type: text/html; charset=utf-8'."\r\n"
 );
+*/
+
+//2) configure smtp_auth_mail. More secure and reliable way.
+
+require './smtp_auth_mail.php';
+
+mail2(
+    $data['to'],
+    $data['subject'],
+    $data['html'],
+    $data['from']
+)
 
 ?>
