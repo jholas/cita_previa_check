@@ -4,16 +4,16 @@ import { config } from "./config.service";
 /**
  * Push notifications to Android phone
  * Provided by:
- *   BuzzerMe (buzzerme.com)
+ *   Push by Techulus (push.techulus.com)
  * 
- * Android app by BuzzerMe required to provide push notifications:
- *   <playstore-link> To Be Provided (still in development)
+ * Android app by techulus required to provide push notifications:
+ *   https://play.google.com/store/apps/details?id=com.techulus.push
  */
 
 
 export function sendPushNotification(title: string, body:string, link: string) {
 
-    const reqUrl = 'https://api.buzzerme.com/notify';
+    const reqUrl = 'https://push.techulus.com/api/v1/notify';
 
     const reqBody = {
         title,
