@@ -149,6 +149,7 @@ function logAppExit(exitCode: number) {
     const page = await browser.newPage();
     let isPageClosed = false;
     let isBrowserDisconnected = false;
+    let isCleaningUp = false;
     //await page.setCacheEnabled(false);
     /* const pages = await browser.pages();
     const page = pages[0]; */
@@ -160,38 +161,50 @@ function logAppExit(exitCode: number) {
     await page.setViewport({width: 1080, height: 1150});
 
     const cleanup: cleanupFce = async (errCode: CleanupCode, desc?: string): Promise<void> => {
-        return new Promise((resolve, reject) => {
-            log.debug(`cleanup: isPageClosed=${isPageClosed}, isBrowserDisconnected=${isBrowserDisconnected}`);
-            if (isPageClosed && isBrowserDisconnected) {
-                log.debug('cleanup: returns');
-                resolve();
-            }
+        log.debug(`cleanup: isPageClosed=${isPageClosed}, isBrowserDisconnected=${isBrowserDisconnected}`);
+        if (isPageClosed && isBrowserDisconnected) {
+            log.debug('cleanup: already cleaned up');
+            return;
+        }
 
-            try {
-                log.debug(`cleanup: errCode=${errCode}, desc='${desc || 'no description'}'`);
-                if (page && !isPageClosed) {
-                    page.close();
-                    isPageClosed = true;
-                }
-                if (!isBrowserDisconnected) {
-                    browser.disconnect();
-                    isBrowserDisconnected = true;
-                }
-                logAppExit(0);
-                process.exit(0);
-            } catch (err) {
-                log.error('cleanup failed:', err);
-                logAppExit(1);
-                process.exit(1);
-            } finally {
-                resolve();
+        if (isCleaningUp) {
+            log.debug('cleanup: already cleaning up');
+            return;
+        }
+
+        isCleaningUp = true;
+    
+        try {
+            log.debug(`cleanup: errCode=${errCode}, desc='${desc || 'no description'}'`);
+            
+            if (page && !isPageClosed) {
+                await page.close();
+                isPageClosed = true;
+                log.debug('cleanup: page closed');
             }
-        });
+    
+            if (!isBrowserDisconnected) {
+                await browser.disconnect();
+                isBrowserDisconnected = true;
+                log.debug('cleanup: browser disconnected');
+            }
+    
+            logAppExit(0);
+            process.exit(0);
+        } catch (err) {
+            log.error('cleanup failed:', err);
+            logAppExit(1);
+            process.exit(1);
+        }
     };
 
     // async wait: Too many requests
     page.waitForFunction('document.querySelector("body").innerText.includes("Too Many Requests")')
         .then(async (res) => {
+            if (isCleaningUp) {
+                log.debug('cleanup: already cleaned up: too many requests');
+                return;
+            }
             frmData.isCitaAvailable = false;
             log.warn('Result: ERR: TOO MANY REQUESTS', res);
             await createScreenshot(page, 'too-many-requests', frmData.CITA_OP);
@@ -199,6 +212,10 @@ function logAppExit(exitCode: number) {
             await cleanup(CleanupCode.TOO_MANY_REQUESTS, 'err: too many requests');
         })
         .catch(async (err) => {
+            if (isCleaningUp) {
+                log.debug('cleanup: already cleaned up: too many requests');
+                return;
+            }
             log.error('exception caught in "too many requests" async handler', err);
             if (!frmData.isCitaAvailable) {
                 await cleanup(CleanupCode.TOO_MANY_REQUESTS_ERR, err);
@@ -208,6 +225,10 @@ function logAppExit(exitCode: number) {
     // async wait: URL rejected
     page.waitForFunction('document.querySelector("body").innerText.includes("The requested URL was rejected")')
         .then(async (res) => {
+            if (isCleaningUp) {
+                log.debug('cleanup: already cleaned up: url rejected');
+                return;
+            }
             frmData.isCitaAvailable = false;
             log.warn('Result: ERR: URL REJECTED', res);
             await createScreenshot(page, 'rejected', frmData.CITA_OP);
@@ -215,6 +236,10 @@ function logAppExit(exitCode: number) {
             await cleanup(CleanupCode.URL_REJECTED, 'err: rejected');
         })
         .catch(async (err) => {
+            if (isCleaningUp) {
+                log.debug('cleanup: already cleaned up: url rejected');
+                return;
+            }
             log.error('exception caught in "url rejected" async handler', err);
             if (!frmData.isCitaAvailable) {
                 await cleanup(CleanupCode.URL_REJECTED_ERR, err);
@@ -224,6 +249,10 @@ function logAppExit(exitCode: number) {
     // async wait: No Citas disponible
     page.waitForFunction('document.querySelector("body").innerText.includes("no hay citas disponibles")')
         .then(async (res) => {
+            if (isCleaningUp) {
+                log.debug('cleanup: already cleaned up: no citas disponible');
+                return;
+            }
             frmData.isCitaAvailable = false;
             log.warn('Result: WARN: NO CITAS DISPONIBLE');
             await createScreenshot(page, 'no-disponible', frmData.CITA_OP);
@@ -231,6 +260,10 @@ function logAppExit(exitCode: number) {
             await cleanup(CleanupCode.NO_CITAS_DISPONIBLE, 'err: no citas disponible');
         })
         .catch(async (err) => {
+            if (isCleaningUp) {
+                log.debug('cleanup: already cleaned up: no citas disponible');
+                return;
+            }
             log.error('exception caught in "no citas disponibles" async handler ', err);
             if (!frmData.isCitaAvailable) {
                 await cleanup(CleanupCode.NO_CITAS_DISPONIBLE_ERR, err);
