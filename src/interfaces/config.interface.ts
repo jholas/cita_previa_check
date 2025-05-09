@@ -1,4 +1,6 @@
 export interface IMailer {
+    /** Indicates if to send email notification */
+    enabled: boolean;
     /** Url of mailer php script */
     url: string;
     /** Token to protect mailer against spamming */

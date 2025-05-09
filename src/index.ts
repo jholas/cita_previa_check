@@ -356,13 +356,14 @@ function logAppExit(exitCode: number) {
     }
 
     // Mail notification
-    try {
-        const sendTo = config.default.mailer.to.join(', ');
-        await sendMail(
-            sendTo,
-            config.default.mailer.from,
-            `Cita disponible: (${frmData.CITA_OP}) ${frmData.CITA_OP_DESC}`,
-            `cita previa available: ${frmData.CITA_OP} - ${frmData.CITA_OP_DESC}`,
+    if (config.default.mailer.enabled === true) {
+        try {
+            const sendTo = config.default.mailer.to.join(', ');
+            await sendMail(
+                sendTo,
+                config.default.mailer.from,
+                `Cita disponible: (${frmData.CITA_OP}) ${frmData.CITA_OP_DESC}`,
+                `cita previa available: ${frmData.CITA_OP} - ${frmData.CITA_OP_DESC}`,
 //HTML mail content
 `<html><body>Cita previa available:
 <br>
@@ -376,14 +377,17 @@ ${citaPlaces}
 <br><br>
 <img src="data:image/png;base64,${base64_encode(screenshotPath)}" />
 </body></html>`
-        );
-        log.info(`Email: sent (${sendTo})`);
-    } catch (err) {
-        log.error('Err: sending mail failed: cita available', err);
+            );
+            log.info(`Email: sent (${sendTo})`);
+        } catch (err) {
+            log.error('Err: sending mail failed: cita available', err);
+        }
+    } else {
+        log.info('Email: not sent, mailer is disabled');
     }
 
 
-    //Don't cleanup, instead keep the window open to finish the CITA
+    //Don't cleanup, instead keep the window open to finish the CITA manually
     logAppExit(0);
     process.exit(0);
   })();
