@@ -1,18 +1,18 @@
 import fs from 'node:fs';
 import puppeteer from 'puppeteer';
-import arg from 'arg';
 import { sendMail } from './services/mailer.service';
 import {
     base64_encode,
     cleanupFce,
     createScreenshot,
     delay,
+    getCitaPageUrl,
     getFormatedDateTime,
     getProvinciaUrl,
     getRandomUserAgent,
+    logAppExit,
     printHelp
 } from './utils';
-import { Country, OperationDescription } from './operation-enums';
 import { sendPushNotification } from './services/mobile-notifier.service';
 import { residency_eu } from './operations/residency_eu';
 import { nie } from './operations/nie';
@@ -20,109 +20,29 @@ import { CitaFormData } from './models/cita-form-data.model';
 import { Log } from './services/logger.service';
 import { CleanupCode } from './cleanup-code.enum';
 import { config } from './services/config.service';
+import { parseCliArgs } from './services/cli-args-parser.service';
 
 
 const log = Log.createLogger('index');
 console.log(''); // add empty line
 log.info('APPLICATION START with args', process.argv);
 
-const frmData: CitaFormData = new CitaFormData();
-frmData.isCitaAvailable = false
-
-const getCitaPageUrl = (provincia: string) => 'https://icp.administracionelectronica.gob.es' + getProvinciaUrl(provincia);
-const DEFAULT_PROVINCIA = 'Alicante';
-
-// DEFINE ARGS
-let args: any = {};
+// Parse CLI arguments to application form data
+let frmData: CitaFormData | null = null;
 try {
-    args = arg({
-        '--help': Boolean,      '-h': '--help',
-        '--provincia': String,  '-p': '--provincia',
-        '--cita_op': Number,    '-o': '--cita_op',
-        '--doc_num': String,    '-d': '--doc_num',
-        '--doc_type': String,   '-t': '--doc_type', // optional, N = NIE, D = DNI, P = Passport
-        '--name': String,       '-n': '--name',
-        '--country': String,    '-c': '--country',
-        '--birth-year': Number, '-b': '--birth-year'
-    });
-} catch (err) {
-    console.warn('unknown option');
+    frmData = parseCliArgs();
+} catch (err: Error | any) {
+    log.warn('Invalid argument: ', err?.message || 'unknown error');
     printHelp();
     process.exit(1);
 }
 
-// RESOLVE ARGS: PROVINCIA
-frmData.provincia = args['--provincia'] || DEFAULT_PROVINCIA;
-
-
-// RESOLVE ARGS: CITA_OP
-frmData.CITA_OP = args['--cita_op'] ? String(args['--cita_op']) : '';
-if (!frmData.CITA_OP) {
-    console.warn('cita_op is not defined!');
-    printHelp();
-    process.exit(1);
-}
-frmData.CITA_OP_DESC = OperationDescription[frmData.CITA_OP] || 'UNDEFINED';
-
-// RESOLVE ARGS: DOC_NUM && DOC_TYPE
-frmData.DOC_NUM = args['--doc_num'] || null;
-frmData.DOC_TYPE = args['--doc_type'] || 'N';
-if (!frmData.DOC_NUM) {
-    console.warn('Document number is not defined!');
-    printHelp();
-    process.exit(1);
-}
-if (!(frmData.DOC_TYPE == 'N' || frmData.DOC_TYPE =='D' || frmData.DOC_TYPE == 'P')) {
-    console.warn('Document type error. Wrong type!');
-    printHelp();
+if (!frmData) {
+    log.error('Form data is not defined...exit');
     process.exit(1);
 }
 
-// RESOLVE ARGS: NAME
-frmData.NAME = args['--name'] || null;
-if (!frmData.NAME) {
-    console.warn('name is not defined!');
-    printHelp();
-    process.exit(1);
-}
-
-// RESOLVE ARGS: COUNTRY
-// TODO: resolve country based on enum
-frmData.COUNTRY = args['--country'] && Country[args['--country']] ? Country[args['--country']] : '';
-if (!frmData.COUNTRY) {
-    console.warn('country is not defined!');
-    printHelp();
-    process.exit(1);
-}
-
-// RESOLVE ARGS: BIRTH_YEAR
-frmData.BIRTH_YEAR = args['--birth-year'] ? String(args['--birth-year']) : '';
-if (!frmData.BIRTH_YEAR) {
-    console.warn('birth year is not defined!');
-    printHelp();
-    process.exit(1);
-}
-
-function getDocTypeName(docType: string) {
-    switch (docType) {
-        case 'N':
-            return 'NIE';
-        case 'D':
-            return 'DNI';
-        case 'P':
-            return 'Passport';
-        default:
-            return 'Err: DocType';
-    }
-}
-
-log.info('Provincia:', frmData.provincia);
-log.info('CitaOp:', frmData.CITA_OP, frmData.CITA_OP_DESC);
-log.info(getDocTypeName(frmData.DOC_TYPE) + ':', frmData.DOC_NUM);
-log.info('Name:', frmData.NAME);
-log.info('Country:', frmData.COUNTRY, args['--country']);
-log.info('Birth year:', frmData.BIRTH_YEAR);
-
+frmData.isCitaAvailable = false;
 
 try {
     if (!fs.existsSync('./screenshots')) {
@@ -130,10 +50,6 @@ try {
     }
 } catch (err) {
     log.warn('folder for screenshots could not be created', err);
-}
-
-function logAppExit(exitCode: number) {
-    log.debug(`App is exiting with code: ${exitCode}`);
 }
 
 (async () => {

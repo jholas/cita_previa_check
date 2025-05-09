@@ -84,3 +84,9 @@ export function getRandomUserAgent() {
     const userAgent = new UserAgent({deviceCategory: 'desktop'});
     return userAgent.toString();
 }
+
+export const getCitaPageUrl = (provincia: string) => 'https://icp.administracionelectronica.gob.es' + getProvinciaUrl(provincia);
+
+export function logAppExit(exitCode: number) {
+    log.debug(`App is exiting with code: ${exitCode}`);
+}
