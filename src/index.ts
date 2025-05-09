@@ -356,7 +356,7 @@ function logAppExit(exitCode: number) {
     }
 
     // Mail notification
-    if (config.default.mailer.enabled === true) {
+    if (config.default.mailer.enabled === true && config.default.mailer.to.length > 0) {
         try {
             const sendTo = config.default.mailer.to.join(', ');
             await sendMail(
@@ -383,7 +383,11 @@ ${citaPlaces}
             log.error('Err: sending mail failed: cita available', err);
         }
     } else {
-        log.info('Email: not sent, mailer is disabled');
+        if (config.default.mailer.enabled === true) {
+            log.warn('Email: not sent, no destination address defined');
+        } else {
+            log.info('Email: not sent, mailer is disabled');
+        }
     }
 
 
