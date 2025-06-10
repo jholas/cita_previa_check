@@ -1,11 +1,11 @@
 import { Page } from 'puppeteer';
-import { cleanupFce, delay } from '../utils';
+import { cleanupFce, delay, waitForNoCitasDisponiblesFce } from '../utils';
 import { CitaFormData } from '../models/cita-form-data.model';
 import { Log } from '../services/logger.service';
 import { CleanupCode } from '../cleanup-code.enum';
 
 
-export async function nie(page: Page, frmData: CitaFormData, cleanup: cleanupFce) {
+export async function nie(page: Page, frmData: CitaFormData, cleanup: cleanupFce, waitForNoCitasDisponibles: waitForNoCitasDisponiblesFce) {
     const log = Log.createLogger('nie');
 
     // 1st PAGE
@@ -38,6 +38,7 @@ export async function nie(page: Page, frmData: CitaFormData, cleanup: cleanupFce
         await cleanup(CleanupCode.PAGE_1_5_CLICK_CONF_ERR);
     }
   
+    waitForNoCitasDisponibles(frmData, page, cleanup);
 
     // 2nd PAGE FOLLOWS: NIE + Name
     // passport: txtIdCitado

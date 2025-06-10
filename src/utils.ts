@@ -5,10 +5,12 @@ import { Page } from 'puppeteer';
 import UserAgent from 'user-agents';
 import { Log } from './services/logger.service';
 import { CleanupCode } from './cleanup-code.enum';
+import { CitaFormData } from './models/cita-form-data.model';
 
 const log = Log.createLogger('utils');
 
 export type cleanupFce = (errCode: CleanupCode, desc?: string) => Promise<void>;
+export type waitForNoCitasDisponiblesFce = (frmData: CitaFormData, page: Page, cleanup: cleanupFce) => void;
 
 export function getFormatedDateTime() {
     return moment().format('YYYY-MM-DD_HH-mm-ss');

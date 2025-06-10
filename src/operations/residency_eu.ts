@@ -1,19 +1,27 @@
 import { Page } from 'puppeteer';
-import { cleanupFce, delay } from '../utils';
+import { cleanupFce, delay, waitForNoCitasDisponiblesFce } from '../utils';
 import { CitaFormData } from '../models/cita-form-data.model';
 import { Log } from '../services/logger.service';
 import { CleanupCode } from '../cleanup-code.enum';
 
-export async function residency_eu(page: Page, frmData: CitaFormData, cleanup: cleanupFce) {
+export async function residency_eu(page: Page, frmData: CitaFormData, cleanup: cleanupFce, waitForNoCitasDisponibles: waitForNoCitasDisponiblesFce) {
     const log = Log.createLogger('residency_eu');
 
     // 1st PAGE
     // select value='22' = 'CERTIFICADOS UE'
     // OR
     // select value='4038' = 'POLICIA-CERTIFICADO DE REGISTRO DE CIUDADANO DE LA U.E.'
+    const existsSelector1 = await page.$('select[name="tramiteGrupo[1]"]');
+
     try {
-        await page.waitForSelector('select[name="tramiteGrupo[1]"]');
-        await page.select('select[name="tramiteGrupo[1]"]', frmData.CITA_OP);
+        //await page.waitForSelector('select[name="tramiteGrupo[0]"]');
+        await delay(500);
+
+        if (existsSelector1) {
+            await page.select('select[name="tramiteGrupo[1]"]', frmData.CITA_OP);
+        } else {
+            await page.select('select[name="tramiteGrupo[0]"]', frmData.CITA_OP);
+        }
     } catch (err) {
         await cleanup(CleanupCode.PAGE_1_SEL_OP_ERR, 'err: select');
     }
@@ -38,7 +46,7 @@ export async function residency_eu(page: Page, frmData: CitaFormData, cleanup: c
         await cleanup(CleanupCode.PAGE_1_5_CLICK_CONF_ERR);
     }
     
-    
+    waitForNoCitasDisponibles(frmData, page, cleanup);
 
     // 2nd PAGE FOLLOWS: NIE + Name
     //NIE

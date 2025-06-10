@@ -161,29 +161,31 @@ try {
             }
         });
 
-    // async wait: No Citas disponible
-    page.waitForFunction('document.querySelector("body").innerText.includes("no hay citas disponibles")')
-        .then(async (res) => {
-            if (isCleaningUp) {
-                log.debug('cleanup: already cleaned up: no citas disponible');
-                return;
-            }
-            frmData.isCitaAvailable = false;
-            log.warn('Result: WARN: NO CITAS DISPONIBLE');
-            await createScreenshot(page, 'no-disponible', frmData.CITA_OP);
+    function waitForNoCitasDisponibles(frmData: CitaFormData, page: Page, cleanup: cleanupFce): void {
+        // async wait: No Citas disponible
+        page.waitForFunction('document.querySelector("body").innerText.includes("no hay citas disponibles")')
+            .then(async (res) => {
+                if (isCleaningUp) {
+                    log.debug('cleanup: already cleaned up: no citas disponible');
+                    return;
+                }
+                frmData.isCitaAvailable = false;
+                log.warn('Result: WARN: NO CITAS DISPONIBLE');
+                await createScreenshot(page, 'no-disponible', frmData.CITA_OP);
 
-            await cleanup(CleanupCode.NO_CITAS_DISPONIBLE, 'err: no citas disponible');
-        })
-        .catch(async (err) => {
-            if (isCleaningUp) {
-                log.debug('cleanup: already cleaned up: no citas disponible');
-                return;
-            }
-            log.error('exception caught in "no citas disponibles" async handler ', err);
-            if (!frmData.isCitaAvailable) {
-                await cleanup(CleanupCode.NO_CITAS_DISPONIBLE_ERR, err);
-            }
-        });
+                await cleanup(CleanupCode.NO_CITAS_DISPONIBLE, 'err: no citas disponible');
+            })
+            .catch(async (err) => {
+                if (isCleaningUp) {
+                    log.debug('cleanup: already cleaned up: no citas disponible');
+                    return;
+                }
+                log.error('exception caught in "no citas disponibles" async handler ', err);
+                if (!frmData.isCitaAvailable) {
+                    await cleanup(CleanupCode.NO_CITAS_DISPONIBLE_ERR, err);
+                }
+            });
+    }
 
 
     //await delay(1000);
@@ -208,12 +210,12 @@ try {
         // 22, 4038 => residency_eu.mjs
         case '22':
         case '4038':
-            await residency_eu(page, frmData, cleanup);
+            await residency_eu(page, frmData, cleanup, waitForNoCitasDisponibles);
             break;
 
         // 4039 => assignacion de NIE
         case '4031':
-            await nie(page, frmData, cleanup);
+            await nie(page, frmData, cleanup, waitForNoCitasDisponibles);
             break;
     };
 
