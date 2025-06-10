@@ -1,6 +1,6 @@
 {
-    "enabled": false,
     "mailer": {
+        "enabled": false,
         "url": "url-to-your-hosting-server/mailer.php",
         "token": "token",
         "to": [
