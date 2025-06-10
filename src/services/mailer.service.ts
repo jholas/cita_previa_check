@@ -4,7 +4,7 @@ import { config } from './config.service';
 const mailerUrl = config.default.mailer.url;
 
 
-function sendMail(mailto: string, from: string, subject: string, msgText: string, msgHtml: string) {
+export function sendMail(mailto: string, from: string, subject: string, msgText: string, msgHtml: string) {
     const mailerBody = 
     {
         to: mailto,
@@ -17,5 +17,3 @@ function sendMail(mailto: string, from: string, subject: string, msgText: string
 
     return axios.post(mailerUrl, mailerBody);
 }
-
-export { sendMail };

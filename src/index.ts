@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import puppeteer from 'puppeteer';
+import puppeteer, { Page } from 'puppeteer';
 import { sendMail } from './services/mailer.service';
 import {
     base64_encode,
@@ -66,9 +66,8 @@ try {
     let isPageClosed = false;
     let isBrowserDisconnected = false;
     let isCleaningUp = false;
+
     //await page.setCacheEnabled(false);
-    /* const pages = await browser.pages();
-    const page = pages[0]; */
 
     //await page.setUserAgent(getRandomUserAgent());
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0');
@@ -227,7 +226,18 @@ try {
         await cleanup(CleanupCode.PAGE_4_NAVI_ERR);
     }
 
+
+    await processCitaAvailable(frmData, page, cleanup);
+
+
+    //Don't cleanup, instead keep the window open to finish the CITA manually
+    logAppExit(0);
+    process.exit(0);
+})();
+
+async function processCitaAvailable(frmData: CitaFormData, page: Page, cleanup: cleanupFce): Promise<void> {
     frmData.isCitaAvailable = true;
+
     await delay(700);
     await page.waitForSelector('#idSede > option');
     const opts = await page.$$eval('#idSede > option', (opt) => {
@@ -260,9 +270,15 @@ try {
     //Screenshot CITA
     await page.click('#idSede', { delay: 100 });
     const screenshotPath = await createScreenshot(page, 'CITA', frmData.CITA_OP);
-    
 
     // Mobile Push Notification
+    await processPushNotification(frmData, citaPlaces);
+
+    // Email notification
+    await processMailNtofications(frmData, citaPlaces, screenshotPath);
+}
+
+async function processPushNotification(frmData: CitaFormData, citaPlaces: string): Promise<void> {
     try {
         await sendPushNotification(config.default.mobileNotifier.title, `Cita disponible: ${frmData.CITA_OP} - ${frmData.CITA_OP_DESC}: ${citaPlaces}`, getCitaPageUrl(frmData.provincia));
         log.info('Push notification: sent');
@@ -270,7 +286,9 @@ try {
         //log.error('Err: sending push notification failed: cita available', err);
         log.warn('Err: cita available, but push notification failed:', err.response.data);
     }
+}
 
+async function processMailNtofications(frmData: CitaFormData, citaPlaces: string, screenshotPath: string): Promise<void> {
     // Mail notification
     if (config.default.mailer.enabled === true && config.default.mailer.to.length > 0) {
         try {
@@ -305,9 +323,4 @@ ${citaPlaces}
             log.info('Email: not sent, mailer is disabled');
         }
     }
-
-
-    //Don't cleanup, instead keep the window open to finish the CITA manually
-    logAppExit(0);
-    process.exit(0);
-  })();
+}
